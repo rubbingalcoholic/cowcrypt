@@ -22,5 +22,5 @@ This is a pretty technical doc, so check out these links if you're confused.
 
 
 [1]: https://github.com/rubbingalcoholic/cowcrypt/blob/master/README.md
-[2]: /demos
-[3]: /
+[2]: ../demos
+[3]: ../
