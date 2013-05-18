@@ -23,22 +23,22 @@ free to use the GitHub Issue tracker or email me <<jeff@rubbingalcoholic.com>>
 Quick-Start Table of Contents
 -----------------------------
 * [**WARNING**: Encode your strings as ASCII!][6]
-* [The Hashers: MD5, SHA-1, SHA-256](#the-hashers)
-	- [Basic Usage](#basic-hasher-usage)
-	- [Streaming / Progressive Hashing Mode](#progressive-hashing-mode)
-	- [Hasher Output Formats](#hasher-output-formats)
-* [HMAC](#hmac)
-	- [Basic Usage](#basic-hmac-usage)
-	- [Streaming / Progressive HMAC Mode](#progressive-hmac-hashing-mode)
-* [Symmetric Encryption: AES, CAST5, Twofish](#symmetric-encryption)
-	- [Basic Usage](#basic-symmetric-encryption-syntax)
-	- [Custom Key / Initial Vector](#custom-key--initial-vector)
-	- [Cipher Block Modes](#cipher-block-modes)
-	- [Byte Padding Modes](#byte-padding-modes)
-	- [Cipher Output Format](#cipher-output-format)
-	- [OpenSSL Interoperability Mode](#openssl-interoperability-mode)
-* [PBKDF2](#pbkdf2)
-* [Contributing](#contributing)
+* [The Hashers: MD5, SHA-1, SHA-256][7]
+	- [Basic Usage][8]
+	- [Streaming / Progressive Hashing Mode][9]
+	- [Hasher Output Formats][10]
+* [HMAC][11]
+	- [Basic Usage][12]
+	- [Streaming / Progressive HMAC Mode][13]
+* [Symmetric Encryption: AES, CAST5, Twofish][14]
+	- [Basic Usage][15]
+	- [Custom Key / Initial Vector][16]
+	- [Cipher Block Modes][17]
+	- [Byte Padding Modes][18]
+	- [Cipher Output Format][19]
+	- [OpenSSL Interoperability Mode][20]
+* [PBKDF2][21]
+* [Contributing][22]
 
 
 WARNING: Use ASCII strings!
@@ -325,3 +325,19 @@ if something doesn't work or isn't clear. You can find me on Twitter
 [4]: http://rubbingalcoholic.github.io/cowcrypt/api
 [5]: http://rubbingalcoholic.github.io/cowcrypt/demos
 [6]: #warning-use-ascii-strings
+[7]: #the-hashers
+[8]: #basic-hasher-usage
+[9]: #progressive-hashing-mode
+[10]: #hasher-output-formats
+[11]: #hmac
+[12]: #basic-hmac-usage
+[13]: #progressive-hmac-hashing-mode
+[14]: #symmetric-encryption
+[15]: #basic-symmetric-encryption-syntax
+[16]: #custom-key--initial-vector
+[17]: #cipher-block-modes
+[18]: #byte-padding-modes
+[19]: #cipher-output-format
+[20]: #openssl-interoperability-mode
+[21]: #pbkdf2
+[22]: #contributing
