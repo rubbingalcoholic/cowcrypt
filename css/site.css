@@ -27,10 +27,11 @@ p.synopsis a:hover {
 ul {
 	list-style-type: none;
 	margin: 50px 0 100px 0;
+	padding: 0px;
 }
 ul li {
 	font-size: 1.3em;
-	margin-bottom: 30px;
+	margin: 0 0 30px 0;
 }
 ul li a.main {
 	font-size: 1.5em;
