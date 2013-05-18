@@ -58,7 +58,9 @@ footer {
 	color: gray;
 }
 
-
+footer a {
+	color: black;
+}
 footer img {
 	display: block;
 	margin: 40px auto 10px auto;
