@@ -1,0 +1,17 @@
+body { font-family: arial; background-color: #fee; padding: 15px; }
+
+.hint { opacity: .4; }
+.success { color: green; }
+.warning { color: red; }
+
+label { display: block; }
+label small { font-size: 75%; opacity: .8; }
+
+input { width: 350px; font-family: "Courier New"; font-size: 16px; }
+input.wide { width: 700px; }
+input[disabled=true] { opacity: .5; }
+textarea { width: 350px; height: 100px; }
+
+table { border-collapse: collapse; }
+table th { text-align: left; border: 1px solid black; padding: 3px; }
+table td { font-family: "Courier New"; border: 1px solid black; padding: 3px; vertical-align: top; }

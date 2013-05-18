@@ -1,0 +1,110 @@
+<html>
+	<head>
+		<title>CowCrypt SHA-1 Demo and Benchmark</title>
+		<script src="mootools-1.4.1.js"></script>		
+		<script src="/library/convert.js"></script>
+		<script src="/library/hasher.js"></script>
+		<script src="/library/sha.js"></script>
+
+		<script src="third_party/tiny_sha1.js"></script>
+		<script src="third_party/jshash_sha1.js"></script>
+		<script src="third_party/webtoolkit_sha1.js"></script>
+		
+		<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha1.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="demo.css" />
+		<script type="text/javascript">
+			var do_hash = function()
+			{
+				var data 			= $('data').value;
+
+				var start 			= new Date().getTime();
+
+				// DO IT!!!!
+				var hash 			= new SHA1().hash(data);
+
+				var end 			= new Date().getTime();
+				var data_mod_length	= data.length % 64;
+
+				$('hashed_data').value = hash;
+				$('benchmark_1').set('html', '<strong>Time:</strong> '+(end - start) + ' ms');
+				$('text_length').set('html', '<strong>Length:</strong> '+data.length+' bytes (' + Math.floor(data.length / 64) + ' 512-bit blocks + ' + (data_mod_length*8) + ' bit remainder)');
+
+				// Crypto.JS SHA1
+				var start = new Date().getTime();
+				var hash = CryptoJS.SHA1(data);
+				var end = new Date().getTime();
+				$('data_2').value = hash;
+				$('benchmark_2').set('html', (end - start) + ' ms');
+
+				// Tiny SHA1
+				var start = new Date().getTime();
+				var hash = tiny_sha1(data);
+				var end = new Date().getTime();			
+				$('data_3').value = hash;
+				$('benchmark_3').set('html', (end - start) + ' ms');
+
+				// Webtoolkit SHA1
+				var start = new Date().getTime();
+				var hash = webtoolkit_sha1(data);
+				var end = new Date().getTime();			
+				$('data_4').value = hash;
+				$('benchmark_4').set('html', (end - start) + ' ms');
+
+				// Paj SHA1
+				var start = new Date().getTime();
+				var hash = rstr_sha1(data);
+				var end = new Date().getTime();
+				$('data_5').value = convert.binstring_to_hex(hash);
+				$('benchmark_5').set('html', (end - start) + ' ms');
+			}
+		</script>
+	</head>
+	<body>
+		<h1>CowCrypt SHA-1 Demo and Benchmark</h1>
+		<p>All of these implementations will slow down considerably if you have the JavaScript console open or enable script debugging.</p>
+		<table>
+			<tr>
+				<td>
+					<label for="data">data to hash</label>
+					<textarea id="data" >This is my data to hash. There's not a whole lot of useful information here, sadly. But it IS cleverly just shy of 1024 bits!!</textarea>
+				</td>
+				<td>
+					<label for="hashed_data">hashed data</label>
+					<textarea id="hashed_data"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td><button onclick="do_hash()">Hash it!</button></td>
+				<td><span id="benchmark_1"></span></td>
+			</tr>
+			<tr>
+				<td colspan="2"><span id="text_length"></span></td>
+			</tr>
+		</table>
+		<h4>Other implementations</h4>
+		<table>
+			<tr>
+				<td><a href="http://pajhome.org.uk/crypt/md5/scripts.html" target="_blank">PAJ's JSHash</a>:</td>
+				<td><textarea id="data_5" ></textarea></td>
+				<td><span id="benchmark_5"></span></td>
+			</tr>
+			<tr>
+				<td><a href="http://code.google.com/p/crypto-js/#SHA-1" target="_blank">Crypto.JS SHA1</a>:</td>
+				<td><textarea id="data_2" ></textarea></td>
+				<td><span id="benchmark_2"></span></td>
+			</tr>
+			<tr>
+				<td><a href="http://code.google.com/p/tiny-sha1/" target="_blank">Tiny-SHA1</a>:<br/>(there is a bug in this.<br/>I've notified the author.)</td>
+				<td><textarea id="data_3" ></textarea></td>
+				<td><span id="benchmark_3"></span></td>
+			</tr>
+			<tr>
+				<td><a href="http://www.webtoolkit.info/" target="_blank">Secure Hash Algorithm</a>:</td>
+				<td><textarea id="data_4" ></textarea></td>
+				<td><span id="benchmark_4"></span></td>
+			</tr>
+		</table>
+		<hr/>Copyright &copy; 2013 <a href="http://rubbingalcoholic.com">Rubbing Alcoholic</a>
+	</body>
+</html>
