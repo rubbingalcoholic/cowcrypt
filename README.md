@@ -5,10 +5,9 @@ CowCrypt -- MooTools encryption libraries
 Introduction
 ------------
 CowCrypt provides popular hashing and encryption algorithms for the [MooTools
-JavaScript framework][1]. My goal is to provide much of the
-same robust functionality as [crypto-js][2],
-but with the elegance and familiar syntax of MooTools. The code is licensed
-under [the MIT License][3].
+JavaScript framework][1]. My goal is to provide much of the same robust
+functionality as the [crypto-js][2] library, but with the elegance and familiar
+syntax of MooTools. The code is licensed under [the MIT License][3].
 
 This is an early stage project and the algorithms are not fully optimized for
 speed. However, many of them perform neck-in-neck with other popular crypto
@@ -23,7 +22,7 @@ free to use the GitHub Issue tracker or email me <<jeff@rubbingalcoholic.com>>
 
 Quick-Start Table of Contents
 -----------------------------
-* [**WARNING**: Encode your strings as ASCII!](#warning-use-ascii-strings)
+* [**WARNING**: Encode your strings as ASCII!][6]
 * [The Hashers: MD5, SHA-1, SHA-256](#the-hashers)
 	- [Basic Usage](#basic-hasher-usage)
 	- [Streaming / Progressive Hashing Mode](#progressive-hashing-mode)
@@ -324,4 +323,5 @@ if something doesn't work or isn't clear. You can find me on Twitter
 [2]: http://code.google.com/p/crypto-js
 [3]: http://opensource.org/licenses/MIT
 [4]: http://rubbingalcoholic.github.io/cowcrypt/api
-[4]: http://rubbingalcoholic.github.io/cowcrypt/demos
+[5]: http://rubbingalcoholic.github.io/cowcrypt/demos
+[6]: #warning-use-ascii-strings
