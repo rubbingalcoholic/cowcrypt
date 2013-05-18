@@ -5,7 +5,7 @@ CowCrypt: API Documentation
 ---------------------------
 #### Introduction
 Welcome to the CowCrypt API documentation. Use the sidebar links to learn more
-about CowCrypt's classes.
+about CowCrypt's classes. 
 
 CowCrypt provides popular hashing
 and encryption algorithms for the MooTools JavaScript framework. My goal is to
