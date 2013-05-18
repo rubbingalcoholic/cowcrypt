@@ -18,7 +18,7 @@ This is a pretty technical doc, so check out these links if you're confused.
 #### Other Links
 * [**Quick-start guide on GitHub**][1]
 * [**Demo Pages**][2]
-* [**CowCrypt Homapge**][3]
+* [**CowCrypt Hompage**][3]
 
 
 [1]: https://github.com/rubbingalcoholic/cowcrypt/blob/master/README.md
