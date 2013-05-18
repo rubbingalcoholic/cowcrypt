@@ -5,10 +5,10 @@ CowCrypt -- MooTools encryption libraries
 Introduction
 ------------
 CowCrypt provides popular hashing and encryption algorithms for the [MooTools
-JavaScript framework](http://mootools.net). My goal is to provide much of the
-same robust functionality as [crypto-js](http://code.google.com/p/crypto-js/),
+JavaScript framework][1]. My goal is to provide much of the
+same robust functionality as [crypto-js][2],
 but with the elegance and familiar syntax of MooTools. The code is licensed
-under [the MIT License](http://opensource.org/licenses/MIT).
+under [the MIT License][3].
 
 This is an early stage project and the algorithms are not fully optimized for
 speed. However, many of them perform neck-in-neck with other popular crypto
@@ -17,8 +17,8 @@ libraries, and some of them are much faster (some of them are slower :p).
 Please contact me if you have any questions, issues, or feature requests. Feel
 free to use the GitHub Issue tracker or email me <<jeff@rubbingalcoholic.com>>
 
-* [Read the API documentation](http://rubbingalcoholic.com)
-* [View demos](http://rubbingalcoholic.com)
+* [**Read the API documentation**][4]
+* [**View demos**][5]
 
 
 Quick-Start Table of Contents
@@ -48,7 +48,7 @@ CowCrypt's hashing and encryption functions accept string inputs, but they must
 be ASCII-encoded (ie. containing no UTF8 / multibyte character code values).
 The algorithms do not slow down to check whether your strings are actually
 ASCII. This _will_ lead to broken or corrupted results if you pass multibyte
-characters. NOTABUG. WONTFIX.
+characters. NOTABUG! WONTFIX!
 
 CowCrypt provides convenient conversion methods to encode UTF strings to ASCII,
 but you are responsible for doing this as needed outside of the encryption and
@@ -319,3 +319,9 @@ Please let me know if you have any suggestions for improvements. If you're code
 savvy, fork the project and make the change yourself! I will do my best to help
 if something doesn't work or isn't clear. You can find me on Twitter
 @rubbingalcohol
+
+[1]: http://mootools.net
+[2]: http://code.google.com/p/crypto-js
+[3]: http://opensource.org/licenses/MIT
+[4]: http://rubbingalcoholic.github.io/cowcrypt/api
+[4]: http://rubbingalcoholic.github.io/cowcrypt/demos
