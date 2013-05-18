@@ -1,5 +1,5 @@
 CowCrypt -- MooTools encryption libraries
-================
+=========================================
 #### SHA-1, SHA-256, MD5, AES, CAST5, Twofish, HMAC, PBKDF2 and more!
 
 Introduction
@@ -150,7 +150,7 @@ This allows you to verify both data integrity and authenticity.
 #### Progressive HMAC Hashing Mode
 
 This wraps the streaming mode functionality for the Hasher subclass instance
-used by HMAC. [See above](#hasher_streaming) for a more complete explanation.
+used by HMAC. [See above][9] for a more complete explanation.
 
 ```javascript
 
