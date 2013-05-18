@@ -1,0 +1,68 @@
+<html>
+	<head>
+		<title>CowCrypt HMAC Demo</title>
+		<script src="mootools-1.4.1.js"></script>
+		<script src="/library/convert.js"></script>
+		<script src="/library/hasher.js"></script>
+		<script src="/library/sha.js"></script>
+		<script src="/library/hmac.js"></script>
+				
+		<link rel="stylesheet" type="text/css" href="demo.css" />
+	</head>
+	<body>
+		<h1>CowCrypt HMAC Demo</h1>
+		<p>Check out the JavaScript console to see an example of progressive mode.</p>
+		<table>
+			<tr>
+				<td colspan="2">
+					<label for="passphrase">passphrase</label>
+					<input type="text" id="passphrase" value="Secret Passphrase" />
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label for="data">Data to hash:</label>
+					<textarea id="data">Message</textarea>
+					<br/>
+					<button type="button" id="do_hmac">Do HMAC</button>
+				</td>
+				<td>
+					<label for="hashed">HMAC Hash</label>
+					<textarea id="hashed"></textarea>
+				</td>
+			</tr>
+		</table>
+		<hr/>Copyright &copy; 2013 <a href="http://rubbingalcoholic.com">Rubbing Alcoholic</a>
+		<script type="text/javascript">
+			window.addEvent('domready', function() {
+				$('do_hmac').addEvent('click', function(e) {
+					do_ra_hmac();
+				});
+			});
+
+			var do_ra_hmac = function()
+			{
+				var passphrase = $('passphrase').value;
+
+				var _hmac = new HMAC({passphrase: passphrase});
+
+				var output = _hmac.hash($('data').value);
+
+				$('hashed').value = output;
+
+				// RA NOTE ~ The following is not related to any values you entered above.
+				// It is just there to demonstrate the progressive mode.
+
+				console.log('PROGRESSIVE TEST!');
+
+				_hmac.hash('Message Part 1', {stream: true});
+				_hmac.hash('Message Part 2', {stream: true});
+				_hmac.hash('Message Part 3', {stream: true});
+				output = _hmac.finalize();
+
+				console.log('"Message Part 1", "Message Part 2", "Message Part 3" => ', output);
+			}
+
+		</script>
+	</body>
+</html>
