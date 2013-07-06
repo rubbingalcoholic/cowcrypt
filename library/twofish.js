@@ -1,6 +1,6 @@
 /**
  *	Twofish Symmetric Encryption Class
- *	Copyright (c) 2013, Rubbing Alcoholic. (http://rubbingalcoholic.com)
+ *	Copyright (c) 2013, Jeff Lyon. (http://rubbingalcoholic.com)
  * 
  *	Licensed under The MIT License. (http://www.opensource.org/licenses/mit-license.php)
  *	Redistributions of files must retain the above copyright notice.
@@ -10,8 +10,8 @@
  *	@extends				BlockCipher
  *	@requires				convert
  *
- *	@author					Rubbing Alcoholic <jeff@rubbingalcoholic.com>
- *	@copyright				Copyright (c) 2013, Rubbing Alcoholic.
+ *	@author					Jeff Lyon <jeff@rubbingalcoholic.com>
+ *	@copyright				Copyright (c) 2013, Jeff Lyon.
  *	@license				{@link http://www.opensource.org/licenses/mit-license.php|The MIT License}
  *
  *	@desc					Creates a new Twofish instance

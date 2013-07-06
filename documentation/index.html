@@ -41,54 +41,301 @@
 
 
     <section>
-        <article><h1>Streamable SHA1</h1>
+        <article><h1>CowCrypt -- MooTools encryption libraries</h1>
 
-<p><strong><a href="http://rubbingalcoholic.com/demos/sha1.html">See the demo on my web site!</a></strong></p>
+<h4>SHA-1, SHA-256, MD5, AES, CAST5, Twofish, HMAC, PBKDF2 and more!</h4>
 
-<p>I created this SHA1 class to solve a problem: many existing JavaScript SHA1
-implementations choke and slow down when you try to hash large amounts of data.
-This is because you typically have to pass all your data as one large string
-into one function call. This is fine for a few kilobytes of data, but if you&#39;re
-hashing megabytes or more of data, it takes a lot of CPU and memory to pass
-huge strings around.</p>
+<h2>Introduction</h2>
 
-<p>This SHA1 class gives you the option to stream data into your hash object over
-multiple calls. The class buffers and processes blocks of 64 bytes, discarding
-data that is no longer needed. This can speed things up significantly,
-especially for applications that hash data generated in a loop.</p>
+<p>CowCrypt provides popular hashing and encryption algorithms for the <a href="http://mootools.net">MooTools
+JavaScript framework</a>. My goal is to provide much of the same robust
+functionality as the <a href="http://code.google.com/p/crypto-js">crypto-js</a> library, but with the elegance and familiar
+syntax of MooTools. The code is licensed under <a href="http://opensource.org/licenses/MIT">the MIT License</a>.</p>
 
-<p>This app is distributed under the MIT License and is free software.</p>
+<p>This is an early stage project and the algorithms are not fully optimized for
+speed. However, many of them perform neck-in-neck with other popular crypto
+libraries, and some of them are much faster (some of them are slower :p).</p>
 
-<h2>Dependencies</h2>
+<p>Please contact me if you have any questions, issues, or feature requests. Feel
+free to use the GitHub Issue tracker or email me <a href="mailto:&lt;jeff@rubbingalcoholic.com">&lt;jeff@rubbingalcoholic.com</a>&gt;</p>
 
-<ul><li><a href="http://mootools.net/">MooTools 1.4+</a></li></ul>
+<ul><li><a href="http://rubbingalcoholic.github.io/cowcrypt/api"><strong>Read the API documentation</strong></a></li><li><a href="http://rubbingalcoholic.github.io/cowcrypt/demos"><strong>View demos</strong></a></li></ul>
 
-<h2>Usage</h2>
+<h2>Quick-Start Table of Contents</h2>
 
-<p>By default, this class behaves like any other SHA1 class:</p>
+<ul><li><a href="#warning-use-ascii-strings"><strong>WARNING</strong>: Encode your strings as ASCII!</a></li><li><a href="#the-hashers">The Hashers: MD5, SHA-1, SHA-256</a><ul><li><a href="#basic-hasher-usage">Basic Usage</a></li><li><a href="#progressive-hashing-mode">Streaming / Progressive Hashing Mode</a></li><li><a href="#hasher-output-formats">Hasher Output Formats</a></li></ul></li><li><a href="#hmac">HMAC</a><ul><li><a href="#basic-hmac-usage">Basic Usage</a></li><li><a href="#progressive-hmac-hashing-mode">Streaming / Progressive HMAC Mode</a></li></ul></li><li><a href="#symmetric-encryption">Symmetric Encryption: AES, CAST5, Twofish</a><ul><li><a href="#basic-symmetric-encryption-syntax">Basic Usage</a></li><li><a href="#custom-key--initial-vector">Custom Key / Initial Vector</a></li><li><a href="#cipher-block-modes">Cipher Block Modes</a></li><li><a href="#byte-padding-modes">Byte Padding Modes</a></li><li><a href="#cipher-output-format">Cipher Output Format</a></li><li><a href="#openssl-interoperability-mode">OpenSSL Interoperability Mode</a></li></ul></li><li><a href="#pbkdf2">PBKDF2</a></li><li><a href="#contributing">Contributing</a></li></ul>
+
+<h2>WARNING: Use ASCII strings!</h2>
+
+<p>CowCrypt&#39;s hashing and encryption functions accept string inputs, but they must
+be ASCII-encoded (ie. containing no UTF8 / multibyte character code values).
+The algorithms do not slow down to check whether your strings are actually
+ASCII. This <em>will</em> lead to broken or corrupted results if you pass multibyte
+characters. NOTABUG! WONTFIX!</p>
+
+<p>CowCrypt provides convenient conversion methods to encode UTF strings to ASCII,
+but you are responsible for doing this as needed outside of the encryption and
+hashing functions. Be careful!</p>
 
 <p><code></code>`javascript</p>
 
-<pre><code>var hash = new sha1().hash(&#39;data data data &#39;);
-// 65bd90d5e213e8d03e87b5be5eeda3bc81faa772</code></pre>
+<pre><code>var mystring	= &#39;ʟʘȽ ƮɦɨƧ ȘƬɌȋɴɢ ɪŜ ƜǡƇƘŸǃ ßƐŧŧëƦ ȄƞĈøÐe ĩť ƒĭƦŚȚ.&#39;;
+var mystring	= convert.utf8.encode(mystring);
+var hashed		= new SHA1().hash(mystring);</code></pre>
 
 <p><code></code>`</p>
 
-<p>Use the streaming mode option to hash data over multiple iterations:</p>
+<h2>The Hashers</h2>
+
+<p>CowCrypt includes the following classes for hashing data:</p>
+
+<ul><li><p><strong>MD5</strong>: An old hashing algorithm that has fallen out of favor due to its
+susceptibility to collision attacks. A lot of apps still use it, so here it is.</p></li><li><p><strong>SHA1</strong>: Designed to replace MD5. SHA-1 has some theoretical security
+weaknesses, but it&#39;s still the standard and the most widely used hasher.</p></li><li><p><strong>SHA256</strong>: Also known as SHA-2. It was designed to address the security
+problems with SHA-1. Since there&#39;s no (known) real world attack on SHA-1, it
+isn&#39;t widely used.</p></li></ul>
+
+<h4>Basic Hasher Usage</h4>
+
+<p>All of these classes extend the Hasher base class, which provides common
+functionality and makes the usage syntax more or less identical. You can read
+about this in the API docs. OK, here are the usage examples:</p>
 
 <p><code></code>`javascript</p>
 
-<pre><code>var _sha1 = new sha1();
+<pre><code>var hash = new MD5().hash(&#39;data data data &#39;);
+// 760c2be99e98ae3027ae4d4c2816d6ea
+
+var hash = new SHA1().hash(&#39;data data data &#39;);
+// 65bd90d5e213e8d03e87b5be5eeda3bc81faa772
+
+var hash = new SHA256().hash(&#39;data data data &#39;);
+// 6b6d03945132109b4e8c035318219e9553f9e772dbf9392094492b2ea8a4e9ad</code></pre>
+
+<p><code></code>`
+#### Progressive Hashing Mode</p>
+
+<p>Normally you pass your data into the hash function and you&#39;re done with it. But
+if you&#39;re hashing huge amounts of data, perhaps a Linux ISO, it&#39;s a big
+performance drain to pass all of it around in memory at once. Since the hasher
+functions really only operate on 64 bytes of data at a time, there&#39;s no reason
+we should have to pass all that data into them in one call.</p>
+
+<p>Using streaming (or progressive hashing) mode, we can stream data into the
+hasher over multiple calls, potentially reducing our overall memory footprint.
+See below.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var _sha1 = new SHA1();
 for (var i = 0; i &lt; 3; i++)
     _sha1.hash(&#39;data &#39;, {stream: true});
 
 var hash = _sha1.finalize();
 // 65bd90d5e213e8d03e87b5be5eeda3bc81faa772</code></pre>
 
+<p><code></code>`
+#### Hasher Output Formats</p>
+
+<p>By default, each of the hashers returns a hexadecimal string. You can change
+this to an ASCII-encoded binary string, or an array of 32-bit integer &quot;words&quot;
+using the return_format option for the hash and finalize methods.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// in normal hashing mode, pass return_format option on hash
+var hash = new SHA1().hash(&#39;data&#39;, {return_format: &#39;words&#39;});
+
+// in streaming mode, pass return_format option into finalize
+var _sha1 = new SHA1();
+for (var i = 0; i &lt; 3; i++)
+    _sha1.hash(&#39;data &#39;, {stream: true});
+
+var hash = _sha1.finalize({return_format: &#39;binary&#39;);</code></pre>
+
 <p><code></code>`</p>
 
-<p>Once you&#39;re done streaming data in, you call <em>sha1.finalize()</em> to hash any
-remaining data in the buffer and return the result.</p>
+<h2>HMAC</h2>
+
+<p>HMAC is a method of hashing data that uses a passphrase in the hashing process.
+This allows you to verify both data integrity and authenticity.</p>
+
+<h4>Basic HMAC Usage</h4>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var _hmac = new HMAC({
+    passphrase: &#39;password1234lol&#39;,
+    hasher: SHA1
+});
+_hmac.hash(&#39;my data to hash&#39;);</code></pre>
+
+<p><code></code>`</p>
+
+<h4>Progressive HMAC Hashing Mode</h4>
+
+<p>This wraps the streaming mode functionality for the Hasher subclass instance
+used by HMAC. <a href="#progressive-hashing-mode">See above</a> for a more complete explanation.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var _hmac = new HMAC({ passphrase: &#39;12345678&#39;});
+_hmac.hash(&#39;Message Part 1&#39;, {stream: true});
+_hmac.hash(&#39;Message Part 2&#39;, {stream: true});
+_hmac.hash(&#39;Message Part 3&#39;, {stream: true});
+var output = _hmac.finalize();</code></pre>
+
+<p><code></code>`</p>
+
+<h2>Symmetric Encryption</h2>
+
+<p>So far, CowCrypt has the following classes for symmetric encryption:</p>
+
+<ul><li><p><strong>AES</strong>: Also known as Rijndael, AES is effectively the world
+standard symmetric block cipher. It accepts key sizes of 16, 24, and 32 bytes,
+so you can choose between speed and moar security.</p></li><li><p><strong>CAST5</strong>: This is kind of an obscure algorithm. It&#39;s used internally by
+OpenPGP, so it&#39;s good to have around if you were thinking about building a
+JavaScript OpenPGP application.</p></li><li><p><strong>Twofish</strong>: This went head-to-head against Rijndael as a finalist in NIST&#39;s
+AES-selection process. Although it lost the competition, it is a very secure
+algorithm and the dude who built it (Bruce Schneier) it is a total genius.</p></li></ul>
+
+<h4>Basic Symmetric Encryption Syntax</h4>
+
+<p>All of these classes extend the BlockCipher base class, which provides common
+functionality and makes the usage syntax more or less identical. You can read
+about this in the API docs.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// This encrypts by deriving a key from the passphrase &#39;mypassword1234&#39;
+var _aes		= new AES({passhprase: &#39;mypassword1234&#39;});
+var data		= convert.utf8.encode(&#39;i like ŞĩŁĿŶ ǙƝȈʗʘɗε characters&#39;);
+var encrypted	= _aes.encrypt(data);</code></pre>
+
+<p><code></code>`</p>
+
+<h4>Custom Key / Initial Vector</h4>
+
+<p>You can also directly specify a key and initial vector (IV).</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var my_key	= convert.hex_to_binstring(&#39;0123456712345678234567893456789a&#39;);
+var my_iv	= convert.hex_to_binstring(&#39;9876543210fedcba&#39;);
+var _cast5	= new CAST5({key: my_key, iv: my_iv});
+var crypted	= _cast5.encrypt(&#39;ASCII string! no UTF encoding needed! lol&#39;);</code></pre>
+
+<p><code></code>`</p>
+
+<h4>Cipher Block Modes</h4>
+
+<p>CowCrypt includes the following block operation mode classes:</p>
+
+<ul><li><strong>CBC</strong> (default)</li><li><strong>CFB</strong></li><li><strong>ECB</strong> (weak sauce)</li></ul>
+
+<p>To customize, initialize your cipher with the block_mode option set to a
+reference of your preferred block operation mode class.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// initialize with ECB mode:
+var cipher	= new Twofish({passphrase: &#39;1234&#39;, block_mode: ECB});
+
+// initialize with CFB mode:
+var cipher	= new Twofish({passphrase: &#39;1234&#39;, block_mode: CFB});</code></pre>
+
+<p><code></code>`</p>
+
+<h4>Byte Padding Modes</h4>
+
+<p>CowCrypt includes the following padding mode classes:</p>
+
+<ul><li><strong>PKCS7</strong> (default)</li><li><strong>ANSIX923</strong></li><li><strong>ZeroPadding</strong></li></ul>
+
+<p>When your input plaintext doesn&#39;t match the ciphers block size, it is padded
+before encryption according to whatever byte padding mode class is selected.
+Initialize the cipher with the pad_mode option to override the default. Padding
+will automatically be removed after decryption, except in the case of Zero
+Padding, which can&#39;t be safely removed without potentially corrupting the data.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// initialize with Zero Padding mode:
+var cipher	= new CAST5({passphrase: &#39;1234&#39;, pad_mode: ZeroPadding});
+
+// initialize with ANSIX923 mode:
+var cipher	= new Twofish({passphrase: &#39;1234&#39;, pad_mode: ANSIX923});</code></pre>
+
+<p><code></code>`</p>
+
+<h4>Cipher Output Format</h4>
+
+<p>All of the BlockCipher subclasses output ASCII-encoded binary strings for both
+encryption and decryption. You can easily convert this to other formats using
+the provided convert library:</p>
+
+<p><code></code>javascript</p>
+
+<pre><code>var encrypted = new AES({passphrase: &#39;1234&#39;}).encrypt(&#39;lol i have herpes&#39;);
+
+var hex = convert.binstring_to_hex(encrypted);	// convert to hex
+
+var b64 = convert.base64.encode(encrypted);		// convert to Base64</code></pre>
+
+<p><code></code></p>
+
+<h4>OpenSSL Interoperability Mode</h4>
+
+<p>OpenSSL uses a special format for its encrypted data which prepends salt
+information to the ciphertext. CowCrypt offers an OpenSSL compatibility mode
+for all BlockCipher subclasses. This changes the ciphertext output format and
+passhprase-based key generation method to allow interoperability with OpenSSL.</p>
+
+<p>Suppose we save the text <em>&quot;this is my encrypted file, hopefully.&quot;</em> into a file
+called in.txt. Then we can use OpenSSL to encrypt with the shell command:</p>
+
+<p><code>shell
+    openssl enc -aes-256-cbc -in in.txt -pass pass:&quot;Secret Passphrase&quot; -base64
+</code></p>
+
+<p>The output of this command will be some Base64-encoded encrypted data stream
+using a random salt (different every time). We can decrypt it with CowCrypt.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var openssl_data = convert.base64.decode(&#39;U2FsdGVkX18hkhQhtWqrwimjR4BBoZvK\
+tdd9MzDuuqU+pyHD+T2aA2/XvB6OY5bvaH7fTvIxGz7Yve01j25+LQ==&#39;);
+
+var _aes = new AES({
+    block_mode: CBC,
+    pad_mode: PKCS7,
+    passphrase: &#39;Secret Passphrase&#39;,
+    openssl_mode: true
+});
+
+var plaintext = _aes.decrypt(openssl_data);
+// outputs &quot;this is my encrypted file, hopefully.&quot;</code></pre>
+
+<p><code></code>`</p>
+
+<h2>PBKDF2</h2>
+
+<p>PBKDF2 is a standard for turning a passphrase into a symmetric key using an
+optional salt. This is used internally by the symmetric ciphers when you
+initialize with a passphrase instead of explicitly passing a key and initial
+vector. Note that the PBKDF2 compute method returns an ASCII-encoded binary
+string, just like how the symmetric ciphers do.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var _kdf = new PBKDF2({
+    key_size: 32,			// note the key size is in bytes
+    hasher: SHA256,			// PBKDF2 uses HMAC internally
+    iterations: 1000		// moar = bettar (slowar)
+});
+var key = _kdf.compute(&#39;password1234&#39;, &#39;arbitrary salt value&#39;);</code></pre>
+
+<p><code></code>`</p>
 
 <h2>Contributing</h2>
 
@@ -112,7 +359,7 @@ if something doesn&#39;t work or isn&#39;t clear. You can find me on Twitter
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Thu May 16 2013 22:34:26 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Sat Jul 06 2013 04:01:16 GMT+0100 (BST)
 </footer>
 
 <script> prettyPrint(); </script>

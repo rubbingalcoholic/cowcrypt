@@ -1,6 +1,6 @@
 /*
  *	Secure Hash Algorithm classes
- *	Copyright (c) 2013, Rubbing Alcoholic. (http://rubbingalcoholic.com)
+ *	Copyright (c) 2013, Jeff Lyon. (http://rubbingalcoholic.com)
  * 
  *	Licensed under The MIT License. (http://www.opensource.org/licenses/mit-license.php)
  *	Redistributions of files must retain the above copyright notice.
