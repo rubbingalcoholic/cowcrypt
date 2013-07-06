@@ -1,6 +1,6 @@
 /**
  *	Generic Hasher Base Class
- *	Copyright (c) 2013, Rubbing Alcoholic. (http://rubbingalcoholic.com)
+ *	Copyright (c) 2013, Jeff Lyon. (http://rubbingalcoholic.com)
  *	
  *	Licensed under The MIT License. 
  *	Redistributions of files must retain the above copyright notice.
