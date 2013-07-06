@@ -1,5 +1,5 @@
-CowCrypt -- MooTools encryption libraries
-=========================================
+CowCrypt -- MooTools encryption libs
+====================================
 #### SHA-1, SHA-256, MD5, AES, CAST5, Twofish, HMAC, PBKDF2 and more!
 
 Introduction
