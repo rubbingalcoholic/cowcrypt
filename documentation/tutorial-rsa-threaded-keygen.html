@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Tutorial: Threaded RSA Functionality</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Tutorial: Threaded RSA Functionality</h1>
+    
+    <section>
+    
+<header>
+    
+
+    <h2>Threaded RSA Functionality</h2>
+</header>  
+
+<article>
+    <h1>Threaded RSA Key Generation and Decryption</h1>
+
+<p>CowCrypt supports RSA encryption / decryption, as well as a <a href="http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf">FIPS 186-4</a>
+compliant secure key generator. RSA cryptography involves mathematics with very
+large prime numbers. Depending on the browser and CPU, these operations can be
+resource-intensive (slow). Because JavaScript is typically single-threaded,
+executing these operations synchronously can cause the browser to become
+unresponsive while it waits for the functions to complete. This can lead to an
+apparently hung browser, or the dreaded &quot;a script on this page is taking too
+long&quot; warning box.</p>
+
+<p>Fortunately, many modern browsers support the <a href="http://www.html5rocks.com/en/tutorials/workers/basics/">Web Workers</a> API, a new part
+of the HTML 5 spec. This allows us to execute resource-intensive operations in
+a separate thread, which runs asynchronously and &quot;phones home&quot; to the main
+browser thread when the work is complete. Using Web Workers, CowCrypt can do
+expensive RSA operations in the background without impacting perceived browser
+performance or responsiveness.</p>
+
+<h2>Table of Contents</h2>
+
+<ul><li><a href="#requirements">Requirements</a></li><li><a href="#generating-an-rsa-key">Generating an RSA Key</a><ul><li><a href="#generate-the-public-exponent-e">Generate public exponent <em>e</em></a></li><li><a href="#a-note-on-bigint-values">A note on BigInt values</a></li><li><a href="#generating-the-large-primes-p-and-q">Generate random primes <em>p</em> and <em>q</em></a></li><li><a href="#compute-the-private-key-from-p-and-q">Compute the private key from <em>p</em> and <em>q</em></a></li></ul></li><li><a href="#threaded-rsa-decryption">Threaded RSA Decryption</a></li><li><a href="#crypto-math-js-worker-messaging-reference"><strong>crypto_math.js Threaded Messaging Reference</strong></a><ul><li><a href="#messages-sent-to-the-crypto-math-js-worker">Messages sent to the worker</a></li><li><a href="#messages-sent-from-the-crypto-math-js-worker">Messages sent from the worker</a></li></ul></li></ul>
+
+<h2>Requirements</h2>
+
+<ul><li>Browser support for the <a href="http://www.html5rocks.com/en/tutorials/workers/basics/">Web Workers</a> API</li><li>Browser support for <em><a href="https://developer.mozilla.org/en-US/docs/Web/API/window.crypto.getRandomValues">window.crypto.getRandomValues</a></em> (for key generation)</li><li>CowCrypt&#39;s crypto_math.js (for key generation), plus rsa.js and convert.js
+(for encryption / decryption)</li></ul>
+
+<h2>Generating an RSA key</h2>
+
+<p>An RSA key is built up from several values. We&#39;ll generate all of these:</p>
+
+<ul><li><em>e</em>:		The public exponent</li><li><em>p</em>:		First private prime factor</li><li><em>q</em>:		Second private prime factor</li><li><em>n</em>:		The public modulus, the product of p × q. (The security of RSA
+depends on it being difficult to factor p and q out of this number)</li><li><em>Φ(n)</em>:	(phi of n) The product of (p - 1) × (q - 1). Used to compute <em>d</em></li><li><em>u</em>:		Multiplicative inverse of the lesser(p, q) mod greater(p, q)</li><li><em>d</em>:		The private exponent</li></ul>
+
+<h4>Generate the public exponent <em>e</em></h4>
+
+<p>First, we generate our public exponent <em>e</em>. This can be any odd integer greater
+than 2^16 and less than 2^256. It doesn&#39;t have to be random (65537 will do just
+fine), but if you want a random value, CowCrypt has you covered:</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// Generate random public exponent
+var e = crypto_math.get_random_public_exponent();</code></pre>
+
+<p><code></code>`</p>
+
+<p>This returns a BigInt value (not an integer). If you&#39;re wondering what the hell
+that is, read on.</p>
+
+<h4>A note on BigInt values</h4>
+
+<p>RSA uses huge integers, sometimes upwards of 2048 bits. JavaScript&#39;s native
+support for integers tops out at 53 bits, so we&#39;re using a slightly modified
+version of <a href="http://www.leemon.com/crypto/BigInt.html">Leemon&#39;s excellent BigInt.js</a> library to give us those extra
+bits. Leemon&#39;s code is super fast, but it&#39;s kind of ugly, so we&#39;ve wrapped it
+up inside crypto_math.js to make it feel a bit more object-oriented.</p>
+
+<p>CowCrypt&#39;s RSA functions expect BigInt values. If you have a big number, say,
+812345834502348952793, and you want to convert it to a BigInt, you can parse it
+from a string of digits:</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var big_int = new BigInt().parse(&quot;812345834502348952793&quot;);</code></pre>
+
+<p><code></code>`</p>
+
+<p>Keep in mind: if you&#39;re going to be clever and choose your own public exponent
+<em>e</em>, you&#39;ll need to parse it as a BigInt, or else EVERYTHING WILL FAIL.</p>
+
+<h4>Generating the large primes <em>p</em> and <em>q</em></h4>
+
+<p>CowCrypt&#39;s RSA key generation supports 2048- and 3072-bit key sizes. These keys
+are constructed using the product of two large prime numbers <em>p</em> and <em>q</em>, which
+must be 1024- or 1536-bit BigInts (respective to the key sizes). CowCrypt uses
+an algorithm based on the Miller-Rabin probabilistic primality test defined in
+<a href="http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf">FIPS 186-4</a>. This generates numbers which are <em>probably</em> prime, within a
+miniscule margin of error (less than 2 to the negative 80th power). While other
+algorithms exist that generate <em>provably</em> prime numbers, they are much slower,
+and as we&#39;ll see, the Miller-Rabin method is already slow enough. In any case,
+it&#39;s secure enough for US government use.</p>
+
+<p>Depending on the hardware used, these primes can take between a few seconds to
+over a minute to generate. We&#39;re going to use the Web Workers API to do this in
+a separate thread, so as not to freeze up the browser. To set this up, we&#39;ll
+define a function to create the Worker thread and listen for events from it!!</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>/**
+ *	Creates a Web Worker to generate a probable prime of a specified
+ *	security length. Executes a callback upon completion.
+ *
+ *	@param {BigInt} e			The pre-selected public exponent
+ *	@param {Number} nlen		(2048 or 3072) The desired security length
+ *	@param {function} callback	Callback function to execute on completion
+ *	@param {BigInt} [p]			OPTIONAL value for p. If this is passed in,
+ *								then we&#39;re obviously generating q (and some
+ *								additional constraints will be used)
+ */
+var generate_prime_threaded = function(e, nlen, callback, p)
+{
+	// If no value for p is passed in, default it to false
+	p || (p = false);
+
+	// Define the Web Worker
+	var worker = new Worker(&#39;crypto_math.js&#39;);
+
+	// Listen for event messages passed back from the worker
+	worker.addEventListener(&#39;message&#39;, function(e) {
+		var data = e.data;
+
+		switch (data.cmd)
+		{
+			// we can only get &quot;secure&quot; random numbers from the main thread
+			case &#39;get_csprng_random_values&#39;:
+				var _bitlen = data.request.bits;
+				var _rand = crypto_math.get_csprng_random_values(_bitlen);
+				worker.postMessage({
+					cmd: &#39;put_csprng_random_values&#39;,
+					response: {
+						random_values: _rand
+					}
+				});
+				break;
+
+			// handle an error in the generation
+			case &#39;put_error&#39;:
+				console.log(&#39;OMG AN ERROR HAS OCCURRED! &#39;, data.error.msg);
+				worker.terminate();
+				break;
+
+			// log data to the console (for debugging purposes)
+			case &#39;put_console_log&#39;:
+				console.log(data.response.msg);
+				break;
+
+			// GOT OUR PROBABLE PRIME NUMBER! Callback and kill the thread
+			case &#39;put_probable_prime&#39;:
+				callback(data.response.prime);
+				worker.terminate();
+				break;
+		}
+	}, false);
+
+	// Send the get_probable_prime command to start the process
+	worker.postMessage({
+		cmd: &#39;get_probable_prime&#39;,
+		request: {
+			e: e,
+			nlen: nlen,
+			p: p		// either a BigInt or false
+		}
+	});
+}</code></pre>
+
+<p><code></code>`</p>
+
+<p>Let&#39;s pick this apart starting from the top. First, notice that this function
+takes an optional input parameter p. We&#39;ll use this same function to generate
+both p and q. So when we pass p into it, then the Worker knows that it should
+generate q, which has some additional constraints on it (based on the value p).</p>
+
+<p>Next, the worker is defined and an event listener is attached that performs
+specific actions when the worker sends a &quot;message&quot; event to the main thread.
+See below for a full list of the messages that can be sent to or from the
+worker, but most of these are self-explanatory: &quot;put<em>error&quot; throws an error.
+&quot;put</em>console<em>log&quot; writes debug data to the JavaScript console.
+&quot;put</em>probable_prime&quot; is called upon completion, and it kills the worker thread
+and executes the callback function.</p>
+
+<p>The only real oddball message is &quot;get<em>csprng</em>random<em>values&quot;. This is sent when
+the worker needs some cryptographically-secure random numbers (it turns out
+that being able to get random numbers is pretty important when you&#39;re looking
+for random prime numbers). When the main thread gets this message, it gets some
+random numbers from the crypto</em>math.get<em>csprng</em>random<em>values method, and then
+sends them back to the worker via the &quot;put</em>csprng<em>random</em>values&quot; message. You
+might wonder why the worker doesn&#39;t just get the random numbers on its own
+without bothering the main thread. Well it&#39;s because
+crypto<em>math.get</em>csprng<em>random</em>values depends on window.crypto.getRandomValues,
+and worker threads have no access to the window object. So the worker has to
+phone home to the main thread and ask the main thread to get its random values
+for it. Ugly, but effective.</p>
+
+<p>After the event listener is defined, a message is sent to the worker with the
+&quot;get<em>probable</em>prime&quot; command, telling it to start the generation process.</p>
+
+<p>Next, we wire up a series of callback functions to handle our random primes
+p and q, and ultimately generate the private key:</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>// define our desired security length (either 2048 or 3072)
+var nlen = 2048;
+
+// define our private key variables
+var p, q, n, phi_n, d, u;
+
+// callback function after p is generated
+var generate_p_complete = function(prime)
+{
+	p = prime;
+
+	// call the prime generator again to generate q (passing in p)
+	generate_prime_threaded(e, nlen, generate_q_complete, p);
+};
+
+// callback function after q is generated, completes the key generation
+var generate_q_complete = function(prime)
+{
+	q = prime;
+
+	// compute the rest of the private key using e, p and q
+	var inverse_data = crypto_math.compute_rsa_key_inverse_data(e, p, q);
+
+	n		= inverse_data.n;
+	phi_n	= inverse_data.phi_n;
+	d		= inverse_data.d;
+	u		= inverse_data.u;
+
+	// The order of p and q may have been swapped, such that p < q
+	p		= inverse_data.p;
+	q		= inverse_data.q;
+
+	// Pass your values into a CowCrypt RSAKey object! lolz
+	var key	= new RSAKey({e: e, n: n, d: d, p: p, q: q, u: u});
+
+	// ALL DONE! LOL!
+};
+
+// call our prime generator, callback to generate_p_complete on completion
+generate_prime_threaded(e, nlen, generate_p_complete);</code></pre>
+
+<p><code></code>`</p>
+
+<p>This is pretty easy. We first define our callback functions for primes p and q.
+Then we call generate<em>prime</em>threaded, passing in the generate<em>p</em>complete
+callback, and away it goes. The process ends up looking like this:</p>
+
+<p>generate<em>prime</em>threaded => generate<em>p</em>complete => generate<em>prime</em>threaded(p) =>
+generate<em>q</em>complete</p>
+
+<h4>Compute the private key from <em>p</em> and <em>q</em></h4>
+
+<p>Once we have primes p and q, we call crypto<em>math.compute</em>rsa<em>key</em>inverse_data
+to generate the rest of the private key values, and that&#39;s it! You now have a
+full RSA public/private key pair and you&#39;re ready to encrypt and decrypt data!!</p>
+
+<h2>Threaded RSA Decryption</h2>
+
+<p>We don&#39;t have to worry about using a Worker thread for encryption, because the
+public exponent is usually relatively small. But decryption can be pretty slow.
+Fortunately this is a bit more straightforward than key generation!</p>
+
+<p>In this example, we&#39;ll assume that the encrypted data is base64-encoded.</p>
+
+<p><code></code>`javascript</p>
+
+<pre><code>var ciphertext = &#39;{YOUR BASE64-ENCODED RSA ENCRYPTED STRING HERE}&#39;
+
+var worker = new Worker(&#39;/library/crypto_math.js&#39;);
+
+worker.addEventListener(&#39;message&#39;, function(e) {
+	var data = e.data;
+
+	switch (data.cmd) {
+		case &#39;put_rsa_decrypt&#39;:
+			decryption_complete_callback(data.response.decrypted)
+			worker.terminate();
+			break;
+	}
+}, false);
+
+worker.postMessage({
+	cmd: &#39;get_rsa_decrypt&#39;,
+	request: {
+		ciphertext: convert.base64.decode(ciphertext),
+		n: n,	// must be a BigInt
+		d: d	// must be a BigInt
+	}
+});
+
+var decryption_complete_callback = function(decrypted)
+{
+	// Manually undo the PKCS1 v1.5 padding
+	decrypted = new PKCS1_v1_5().decode(decrypted);
+
+	// WE&#39;RE DONE! LOLOL!
+}</code></pre>
+
+<p><code></code>`</p>
+
+<p>In the above code, we define our worker, add an event listener that calls the
+decryption<em>complete</em>callback function when a &quot;put<em>rsa</em>decrypt&quot; message is
+received. We send the worker the &quot;get<em>rsa</em>decrypt&quot; command message to start the
+decryption process, and define the decryption<em>complete</em>callback function,
+which un-pads the decrypted plaintext at the end of the process. Simple enough!</p>
+
+<h2>crypto_math.js Worker Messaging Reference</h2>
+
+<p>Due to the threaded nature of Web Workers, we can&#39;t explicitly call functions
+between a worker and the main browser thread. Instead, the crypto_math.js
+worker listens for and handles &quot;message&quot; events, and the main thread (your
+JavaScript code) must do the same. Refer to the examples above to see how these
+listeners are defined in the main thread. This section defines all of the
+messages that can be sent to a worker thread, as well as the messages a worker
+thread can send to the main thread.</p>
+
+<h4>Messages sent <em>to</em> the crypto_math.js worker</h4>
+
+<p><strong>get<em>probable</em>prime</strong>:
+This message kicks off the Miller-Rabin random prime generation process.
+The following properties must be passed into the request object:</p>
+
+<ul><li>e:		(BigInt) Required public exponent e</li><li>nlen:		(Number, either 2048 or 3072) The desired security bit length</li><li>[p]:		(Optional BigInt) The random prime p (used to constrain q)</li></ul>
+
+<p><strong>get<em>rsa</em>encrypt</strong>:
+This message tells the worker to encrypt RSA plaintext given a public key.
+The following properties must be passed into the request object:</p>
+
+<ul><li>plaintext:	(ASCII-encoded binary string) The plaintext to encrypt</li><li>n:			(BigInt) The modulus n</li><li>e:			(BigInt) The public exponent e</li></ul>
+
+<p><strong>get<em>rsa</em>decrypt</strong>:
+This message tells the worker to decrypt RSA ciphertext given a private key.
+The following properties must be passed into the request object:</p>
+
+<ul><li>ciphertext:	(ASCII-encoded binary string) The ciphertext to decrypt</li><li>n:			(BigInt) The modulus n</li><li>d:			(BigInt) The private exponent d</li></ul>
+
+<p><strong>put<em>csprng</em>random_values</strong>:
+This returns random values from the crypto<em>math.get</em>csprng<em>random</em>values
+method to the worker. The worker will request these from the main thread via
+the &quot;get<em>csprng</em>random_values&quot; message (see below).
+The following properties must be passed into the response object:</p>
+
+<ul><li>random<em>values:   (Uint32Array) Result of crypto</em>math.get<em>csprng</em>random<em>values
+for the bit length specified in the &quot;get</em>csprng<em>random</em>values&quot; method.</li></ul>
+
+<h4>Messages sent <em>from</em> the crypto_math.js worker</h4>
+
+<p><strong>put<em>probable</em>prime</strong>:
+This message contains the probable prime generated by the worker after it
+receives the &quot;get<em>probable</em>prime&quot; message from the main thread.
+The following properties are passed in the response object:</p>
+
+<ul><li>prime:	(BigInt) A probable prime</li></ul>
+
+<p><strong>put<em>rsa</em>decrypt</strong>:
+This message contains the decrypted plaintext computed after the worker gets
+the &quot;get<em>rsa</em>decrypt&quot; mssage from the main thread.
+The following properties are passed in the response object:</p>
+
+<ul><li>plaintext:	(ASCII-encoded binary string) Decrypted plaintext. This will
+most likely still have PKCS1 v1.5 padding, so it&#39;s up to you to un-pad!</li></ul>
+
+<p><strong>put<em>console</em>log</strong>:
+This is used for debugging. Since the worker can&#39;t write directly to the
+JavaScript console, it sends this to ask the main thread to do it instead.
+The following properties are passed in the response object:</p>
+
+<ul><li>msg:	(String) the message you will hopefully be kind enough to console.log</li></ul>
+
+<p><strong>put_error</strong>:
+Sent when an error occurs. It&#39;s up to the main thread to listen for this and
+handle the errors. The following properties are passed in the response object:</p>
+
+<ul><li>msg:	(String) The error message</li><li>code: (Number) An integer error message</li></ul>
+
+<p>The following error codes are currently defined:</p>
+
+<ul><li>1:	Unsupported nlen security length (must be 2048 or 3072)</li><li>2:	Invalid public exponent e</li><li>3:	Probable prime generation failure (giving up after too many tries)</li></ul>
+
+<p><strong>get<em>csprng</em>random_values</strong>:
+The worker thread sends this message when it needs cryptographically-secure
+random values. Since only the main thread can generate these (due to reliance
+on the window object), the main thread must call
+crypto<em>math.get</em>csprng<em>random</em>values, passing in the requested bit length,
+and return the result to the worker in a &quot;put<em>csprng</em>random_values&quot; message.
+The following properties are passed in the request object:</p>
+
+<ul><li>bits:	(Number) the requested number of randomly generated bits</li></ul>
+</article>
+
+</section>  
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="AES.html">AES</a></li><li><a href="AnsiX923.html">AnsiX923</a></li><li><a href="BlockCipher.html">BlockCipher</a></li><li><a href="BlockCipherMode.html">BlockCipherMode</a></li><li><a href="CAST5.html">CAST5</a></li><li><a href="CBC.html">CBC</a></li><li><a href="CFB.html">CFB</a></li><li><a href="ECB.html">ECB</a></li><li><a href="EVPKDF.html">EVPKDF</a></li><li><a href="Hasher.html">Hasher</a></li><li><a href="HMAC.html">HMAC</a></li><li><a href="MD5.html">MD5</a></li><li><a href="PaddingMode.html">PaddingMode</a></li><li><a href="PBKDF2.html">PBKDF2</a></li><li><a href="PKCS1_v1_5.html">PKCS1_v1_5</a></li><li><a href="PKCS7.html">PKCS7</a></li><li><a href="RSA.html">RSA</a></li><li><a href="RSAKey.html">RSAKey</a></li><li><a href="SHA1.html">SHA1</a></li><li><a href="SHA256.html">SHA256</a></li><li><a href="Twofish.html">Twofish</a></li><li><a href="ZeroPadding.html">ZeroPadding</a></li></ul><h3>Namespaces</h3><ul><li><a href="convert.html">convert</a></li><li><a href="convert.base64.html">base64</a></li><li><a href="convert.utf8.html">utf8</a></li><li><a href="crypto_math.html">crypto_math</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-rsa-threaded-keygen.html">Threaded RSA Functionality</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Thu Aug 15 2013 09:02:37 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

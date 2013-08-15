@@ -29,6 +29,13 @@ var MD5 = new Class(
 	block_size: 512,
 
 	/**
+	 *	The length in bits of the output block
+	 *	@private
+	 *	@type {number}
+	 */
+	outlen: 128,
+
+	/**
 	 *	Whether this hasher lists the word bytes in small endian order (from small to big)
 	 *	@private
 	 *	@type {boolean}

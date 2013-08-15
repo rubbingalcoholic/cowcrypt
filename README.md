@@ -37,6 +37,13 @@ Quick-Start Table of Contents
 	- [Byte Padding Modes][18]
 	- [Cipher Output Format][19]
 	- [OpenSSL Interoperability Mode][20]
+* [Asymmetric Encryption: RSA][23]
+    - [A note on BigInt values and _crypto_math.js_][30]
+    - [Key Generation][31]
+    - [Handling RSA Keys][32]
+    - [RSA Encryption][33]
+    - [RSA Decryption][34]
+    - [EME PKCS1 v1.5 Encoding / Decoding][35]
 * [PBKDF2][21]
 * [Contributing][22]
 
@@ -294,6 +301,115 @@ using a random salt (different every time). We can decrypt it with CowCrypt.
     // outputs "this is my encrypted file, hopefully."
 ```
 
+RSA Encryption
+--------------
+CowCrypt supports RSA encryption, decryption and key-generation using a
+[FIPS-186-4][27]-compliant probable prime generation algorithm. These features
+can be run in a separate thread using [HTML5 Web Workers][24] for smooth
+performance. See the [Threaded RSA Key Generation and Decryption][25] tutorial
+for more information on setting this up.
+
+**[Check out the RSA demo page][29] to see everything in action.**
+
+#### A note on BigInt values and _crypto_math.js_
+
+RSA uses huge integers, sometimes upwards of 2048 bits. JavaScript's native
+support for integers tops out at 53 bits, so we've wrapped up Leemon's awesome
+[BigInt.js library][26] into _crypto_math.js_ to give us those extra bits. Keep
+in mind:
+
+* **1:**    _crypto_math.js_ is required for all RSA functionality
+* **2:**    The values used for public and private keys are BigInts, and cannot
+            be treated like normal integers. This should be transparent to you,
+            assuming you use CowCrypt's built in RSA functions.
+
+You can parse a BigInt value from a string of digits as follows:
+
+```javascript
+
+    var big_int = new BigInt().parse("812345834502348952793");
+```
+
+#### Key Generation
+
+CowCrypt can generate 2048- or 3072-bit RSA keys. The process is CPU-intensive
+and can take from several seconds to over a minute, depending on the hardware
+used. To prevent the browser from becoming unresponsive, RSA key generation
+must be done in a separate thread. This allows the algorithms to work in the
+background without impacting perceived browser performance. See the
+[Threaded RSA Key Generation and Decryption][25] tutorial for more information.
+
+
+#### Handling RSA Keys
+
+The non-threaded RSA encryption / decryption methods in the _RSA_ class expect
+you to pass an _RSAKey_ object. This object holds the BigInt values associated
+with a public or private key. Private keys have some optional properties that
+store additional data about how the key was generated. This will be useful for
+serializing OpenPGP key data packets once support for that is implemented ;)
+
+```javascript
+
+    // The threaded key generation process will generate all these input values
+    var key = new RSAKey({
+        n: key_modulus,             // required for all keys
+        e: public_exponent,         // required for public keys
+        d: private_exponent,        // required for private keys
+        p: large_prime_p,           // optional for private keys
+        q: large_prime_q,           // optional for private keys
+        u: mult_inverse_p_mod_q     // optional for private keys
+    });
+```
+
+#### RSA Encryption
+
+CowCrypt uses the EME PKCS1 v1.5 encoding method for RSA plaintexts specified
+in [RFC-4880][28] (the OpenPGP spec). This is can encrypt messages up to 11
+bytes less than the byte-length of the modulus, and is useful for symmetric key
+establishment (a la OpenPGP).
+
+```javascript
+
+    var public_key  = {YOUR RSAKey Instance Here};
+    var plaintext   = "Your time is up I will no longer play for you.";
+    var ciphertext  = new RSA().encrypt(plaintext, public_key);
+```
+
+#### RSA Decryption
+
+Once you actually have a private key and some ciphertext, decrypting is easy.
+Note that decrypting is generally a lot slower than encrypting, so this is a
+good thing to do in [a separate Worker thread][25].
+
+```javascript
+
+    var private_key = {YOUR RSAKey Instance Here};
+
+    // generally RSA ciphertext is Base64-encoded. Convert to a binary string!
+    ciphertext      = convert.base64.decode(ciphertext);
+
+    var plaintext   = new RSA().decrypt(ciphertext, private_key);
+```
+
+#### EME PKCS1 v1.5 Encoding and Decoding
+
+If you're using the threaded RSA functions for encryption and decryption, you
+must use encode your plaintext before encryption, and decode your decrypted
+plaintext after decryption using the PKCS1 v1.5 class. The threaded functions
+assume you've already done this, and they won't break, but your ciphertext will
+be a lot less secure if you don't encode properly. Anyhoo, this is easy:
+
+```javascript
+
+    // BEFORE ENCRYPTING
+    var encoded_plaintext = new PKCS1_v1_5().encode(plaintext);
+
+    // ...
+
+    // AFTER DECRYPTING
+    var decoded_plaintext = new PKCS1_v1_5().decode(encoded_plaintext);
+```
+
 PBKDF2
 ------
 PBKDF2 is a standard for turning a passphrase into a symmetric key using an
@@ -319,6 +435,7 @@ savvy, fork the project and make the change yourself! I will do my best to help
 if something doesn't work or isn't clear. You can find me on Twitter
 @rubbingalcohol
 
+
 [1]: http://mootools.net
 [2]: http://code.google.com/p/crypto-js
 [3]: http://opensource.org/licenses/MIT
@@ -341,3 +458,16 @@ if something doesn't work or isn't clear. You can find me on Twitter
 [20]: #openssl-interoperability-mode
 [21]: #pbkdf2
 [22]: #contributing
+[23]: #rsa-encryption
+[24]: http://www.html5rocks.com/en/tutorials/workers/basics/
+[25]: https://github.com/rubbingalcoholic/cowcrypt/blob/master/tutorials/rsa-threaded-keygen.md
+[26]: http://www.leemon.com/crypto/BigInt.html
+[27]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
+[28]: http://tools.ietf.org/rfc/rfc4880.txt
+[29]: http://rubbingalcoholic.github.io/cowcrypt/demos/rsa.html
+[30]: #a-note-on-bigInt-values-and--crypto-math-js--
+[31]: #key-generation
+[32]: #handling-rsa-keys
+[33]: #rsa-encryption
+[34]: #rsa-decryption
+[35]: #eme-pkcs1-v-1-5-encoding-and-decoding

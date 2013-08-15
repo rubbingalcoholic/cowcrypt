@@ -116,6 +116,17 @@ var convert = {
 	},
 
 	/**
+	 *	Converts an array of 32-bit integer words to a hex string
+	 *
+	 *	@param {Array} words	Array of 32-bit integer words
+	 *	@return {string}		Hexademical string
+	 */
+	words_to_hex: function(words)
+	{
+		return this.binstring_to_hex(this.words_to_binstring(words));
+	},
+
+	/**
 	 *	Converts an array of 32-bit integer words to an array of 8-bit integer bytes
 	 *
 	 *	@param {Array} words	Array of 32-bit integer words

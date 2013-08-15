@@ -25,6 +25,13 @@ var SHA1 = new Class(
 	block_size: 512,
 
 	/**
+	 *	The length in bits of the output block
+	 *	@private
+	 *	@type {number}
+	 */
+	outlen: 160,
+
+	/**
 	 *	This is called automatically on class instantiation.
 	 *	@return {SHA1}
 	 */
@@ -142,6 +149,13 @@ var SHA256 = new Class(
 	 *	@type {number}
 	 */
 	block_size: 512,
+
+	/**
+	 *	The length in bits of the output block
+	 *	@private
+	 *	@type {number}
+	 */
+	outlen: 256,
 
 	/**
 	 *	Constants lookup table used for bitwise operations in the SHA256 algorithm

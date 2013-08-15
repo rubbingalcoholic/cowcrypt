@@ -17,6 +17,20 @@ expensive RSA operations in the background without impacting perceived browser
 performance or responsiveness.
 
 
+Table of Contents
+-----------------
+* [Requirements][5]
+* [Generating an RSA Key][6]
+	- [Generate public exponent _e_][7]
+	- [A note on BigInt values][8]
+	- [Generate random primes _p_ and _q_][9]
+	- [Compute the private key from _p_ and _q_][10]
+* [Threaded RSA Decryption][11]
+* [**crypto_math.js Threaded Messaging Reference**][12]
+	- [Messages sent to the worker][13]
+	- [Messages sent from the worker][14]
+
+
 Requirements
 ------------
 * Browser support for the [Web Workers][2] API
@@ -35,6 +49,7 @@ An RSA key is built up from several values. We'll generate all of these:
 * _n_:		The public modulus, the product of p × q. (The security of RSA
 			depends on it being difficult to factor p and q out of this number)
 * _Φ(n)_:	(phi of n) The product of (p - 1) × (q - 1). Used to compute _d_
+* _u_:		Multiplicative inverse of the lesser(p, q) mod greater(p, q)
 * _d_:		The private exponent
 
 
@@ -64,11 +79,10 @@ up inside crypto_math.js to make it feel a bit more object-oriented.
 
 CowCrypt's RSA functions expect BigInt values. If you have a big number, say,
 812345834502348952793, and you want to convert it to a BigInt, you can parse it
-from a string value:
+from a string of digits:
 
 ```javascript
 
-	// Generate a BigInt value for a big integer
     var big_int = new BigInt().parse("812345834502348952793");
 ```
 
@@ -86,9 +100,7 @@ an algorithm based on the Miller-Rabin probabilistic primality test defined in
 miniscule margin of error (less than 2 to the negative 80th power). While other
 algorithms exist that generate _provably_ prime numbers, they are much slower,
 and as we'll see, the Miller-Rabin method is already slow enough. In any case,
-this method provides good enough security for top secret government data. If
-you really want to split hairs over this I will release a version with provable
-primes (I just haven't taken the time to make it threaded yet). ANYWAYS.
+it's secure enough for US government use.
 
 Depending on the hardware used, these primes can take between a few seconds to
 over a minute to generate. We're going to use the Web Workers API to do this in
@@ -203,7 +215,7 @@ p and q, and ultimately generate the private key:
 	var nlen = 2048;
 
 	// define our private key variables
-	var p, q, n, phi_n, d;
+	var p, q, n, phi_n, d, u;
 
 	// callback function after p is generated
 	var generate_p_complete = function(prime)
@@ -222,9 +234,17 @@ p and q, and ultimately generate the private key:
 		// compute the rest of the private key using e, p and q
 		var inverse_data = crypto_math.compute_rsa_key_inverse_data(e, p, q);
 
-		n = inverse_data.n;
-		phi_n = inverse_data.phi_n;
-		d = inverse_data.d;
+		n		= inverse_data.n;
+		phi_n	= inverse_data.phi_n;
+		d		= inverse_data.d;
+		u		= inverse_data.u;
+
+		// The order of p and q may have been swapped, such that p < q
+		p		= inverse_data.p;
+		q		= inverse_data.q;
+
+		// Pass your values into a CowCrypt RSAKey object! lolz
+		var key	= new RSAKey({e: e, n: n, d: d, p: p, q: q, u: u});
 
 		// ALL DONE! LOL!
 	};
@@ -239,6 +259,8 @@ callback, and away it goes. The process ends up looking like this:
 
 generate_prime_threaded => generate_p_complete => generate_prime_threaded(p) =>
 generate_q_complete
+
+#### Compute the private key from _p_ and _q_
 
 Once we have primes p and q, we call crypto_math.compute_rsa_key_inverse_data
 to generate the rest of the private key values, and that's it! You now have a
@@ -309,7 +331,7 @@ thread can send to the main thread.
 #### Messages sent _to_ the crypto_math.js worker
 
 
-**get_probable_prime**
+**get_probable_prime**:
 This message kicks off the Miller-Rabin random prime generation process.
 The following properties must be passed into the request object:
 
@@ -318,7 +340,16 @@ The following properties must be passed into the request object:
 * [p]:		(Optional BigInt) The random prime p (used to constrain q)
 
 
-**get_rsa_decrypt**
+**get_rsa_encrypt**:
+This message tells the worker to encrypt RSA plaintext given a public key.
+The following properties must be passed into the request object:
+
+* plaintext:	(ASCII-encoded binary string) The plaintext to encrypt
+* n:			(BigInt) The modulus n
+* e:			(BigInt) The public exponent e
+
+
+**get_rsa_decrypt**:
 This message tells the worker to decrypt RSA ciphertext given a private key.
 The following properties must be passed into the request object:
 
@@ -327,7 +358,7 @@ The following properties must be passed into the request object:
 * d:			(BigInt) The private exponent d
 
 
-**put_csprng_random_values**
+**put_csprng_random_values**:
 This returns random values from the crypto_math.get_csprng_random_values
 method to the worker. The worker will request these from the main thread via
 the "get_csprng_random_values" message (see below).
@@ -340,7 +371,7 @@ The following properties must be passed into the response object:
 #### Messages sent _from_ the crypto_math.js worker
 
 
-**put_probable_prime**
+**put_probable_prime**:
 This message contains the probable prime generated by the worker after it
 receives the "get_probable_prime" message from the main thread.
 The following properties are passed in the response object:
@@ -348,7 +379,7 @@ The following properties are passed in the response object:
 * prime:	(BigInt) A probable prime
 
 
-**put_rsa_decrypt**
+**put_rsa_decrypt**:
 This message contains the decrypted plaintext computed after the worker gets
 the "get_rsa_decrypt" mssage from the main thread.
 The following properties are passed in the response object:
@@ -357,7 +388,7 @@ The following properties are passed in the response object:
   most likely still have PKCS1 v1.5 padding, so it's up to you to un-pad!
 
 
-**put_console_log**
+**put_console_log**:
 This is used for debugging. Since the worker can't write directly to the
 JavaScript console, it sends this to ask the main thread to do it instead.
 The following properties are passed in the response object:
@@ -365,7 +396,7 @@ The following properties are passed in the response object:
 * msg:	(String) the message you will hopefully be kind enough to console.log
 
 
-**put_error**
+**put_error**:
 Sent when an error occurs. It's up to the main thread to listen for this and
 handle the errors. The following properties are passed in the response object:
 
@@ -379,7 +410,7 @@ The following error codes are currently defined:
 * 3:	Probable prime generation failure (giving up after too many tries)
 
 
-**get_csprng_random_values**
+**get_csprng_random_values**:
 The worker thread sends this message when it needs cryptographically-secure
 random values. Since only the main thread can generate these (due to reliance
 on the window object), the main thread must call
@@ -394,3 +425,13 @@ The following properties are passed in the request object:
 [2]: http://www.html5rocks.com/en/tutorials/workers/basics/
 [3]: https://developer.mozilla.org/en-US/docs/Web/API/window.crypto.getRandomValues
 [4]: http://www.leemon.com/crypto/BigInt.html
+[5]: #requirements
+[6]: #generating-an-rsa-key
+[7]: #generate-the-public-exponent-e
+[8]: #a-note-on-bigint-values
+[9]: #generating-the-large-primes-p-and-q
+[10]: #compute-the-private-key-from-p-and-q
+[11]: #threaded-rsa-decryption
+[12]: #crypto-math-js-worker-messaging-reference
+[13]: #messages-sent-to-the-crypto-math-js-worker
+[14]: #messages-sent-from-the-crypto-math-js-worker
