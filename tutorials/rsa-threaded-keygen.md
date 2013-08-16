@@ -344,7 +344,8 @@ The following properties must be passed into the request object:
 This message tells the worker to encrypt RSA plaintext given a public key.
 The following properties must be passed into the request object:
 
-* plaintext:	(ASCII-encoded binary string) The plaintext to encrypt
+* plaintext:	(ASCII-encoded binary string) The plaintext to encrypt,
+				for your security this should be EME PKCS1 v1.5-encoded
 * n:			(BigInt) The modulus n
 * e:			(BigInt) The public exponent e
 

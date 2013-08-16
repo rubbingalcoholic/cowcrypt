@@ -37,7 +37,7 @@ Quick-Start Table of Contents
 	- [Byte Padding Modes][18]
 	- [Cipher Output Format][19]
 	- [OpenSSL Interoperability Mode][20]
-* [Asymmetric Encryption: RSA][23]
+* [RSA Encryption][23]
     - [A note on BigInt values and _crypto_math.js_][30]
     - [Key Generation][31]
     - [Handling RSA Keys][32]
