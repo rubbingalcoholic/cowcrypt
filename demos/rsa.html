@@ -1,0 +1,242 @@
+<html>
+	<head>
+		<title>CowCrypt RSA Demo</title>
+		<script src="mootools-1.4.1.js"></script>
+		<script src="../library/convert.js"></script>
+		<script src="../library/crypto_math.js"></script>
+		<script src="../library/biginteger.js"></script>
+		<script src="../library/rsa.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="demo.css" />
+	</head>
+	<body>
+		<h1>CowCrypt RSA *cryption Demo</h1>
+		Bits per prime:
+		<select id="bitlength">
+			<option value="64">64</option>
+			<option value="128" selected>128</option>
+			<option value="256">256</option>
+			<option value="512">512</option>
+			<option value="1024">1024</option>
+			<option value="1536">1536</option>
+		</select>
+		<br/>
+		<div id="result"></div>
+		<br/>
+		<button onclick="generate_rsa_key_threaded()">Generate RSA key (threaded)</button>
+		<br/>
+		<label for="p">e:</label> <input type="text" id="e" value="3835989223"/><br/>
+		<label for="p">p:</label> <input type="text" id="p" value="103028737879005109378307927591580363381151064972355133720940894803149713497018448614026770290566843062585382591653341178071603825323469796130031876297025955969014993965296203634813259917021387134173077322000969436838714018575550027696124529807216970283998747423357311300705809171286275363754195356600353090959"/><br/>
+		<label for="q">q:</label> <input type="text" id="q" value="96526424611326857851627464390591896818248415795626617488677379618708464831806067063443333115193849775123025684379977565181137734505723905498021918113310976250075218068464094922731448816841473072140604332326424355877002119566421181231955146075902509632570263780736218426664141357544469239246545744294344423359"><br/>
+		<label for="n">n:</label> <input type="text" id="n" value="9944995699677942482008070023708444636389187316882759584693630195123033372384608581208862222462319832243091009089526273775312991645650435477874067146912311831903846481449666409657534772419397232260524866809950662715988795594670481762267868099331301648564860919647426848467280798809865997723018021238087019146238693176646729274837559671351625040102437270501114369756525315003867342906430675997142010952616269030583175081028742574221112784314225131520718609625412286750653615925507415452117787974821064289669106152552525722725076980791235169835595056920391581813139035593125994677583675498240475329752633670120131311281"><br/>
+		<label for="phi_n">phi_n:</label> <input type="text" id="phi_n" value="9944995699677942482008070023708444636389187316882759584693630195123033372384608581208862222462319832243091009089526273775312991645650435477874067146912311831903846481449666409657534772419397232260524866809950662715988795594670481762267868099331301648564860919647426848467280798809865997723018021238087019146039138014156397307607624279369452779903037789733132618546907040582009164577606160319671907546855576192874766804995423830968371224485031429892664815215075354531563403891747116894573079240958204083355424498225131930009360842649263960907515381037272101896570024389032464950213724969409730726751892569225433796964"><br/>
+		<label for="u">u:</label> <input type="text" id="u" value="79779727024941731715815943669760329987021424813329874008432474192426717028682925499413984292708210349140090252734126303326050081278580383128863496513663880527705542493462211383543371064751200109527067410129337838207084517620481124416292972746448127081509312805445343223688032665719767778625123491128980004234"><br/>
+		<label for="d">d:</label> <input type="text" id="d" value="6647183488143381373259648925215169141352223324440084659034267765579564942802418814339604962145102802460628186189387496424520847723755018336803106852348497974782769040776955218216058283715041901110252893838264282162246301537590979300788281548661740656767032301130845717940125105216932159807721658806528750406987553690529717009182002890037284978674096459817597714489312999778078268585670924846220068461010974646919121580535780483931187280879931291494719706710774556217776569475897655538035575177407139545000357962556834102559979807306791455506983756712240977382207996371479518677334655356922047486895148004462061525659"><br/>
+							
+		<label for="plaintext">plaintext:</label>
+		<textarea id="plaintext">You could have it all. My empire of dirt. I will let you down. I will make you hurt.</textarea>
+		<label for="ciphertext">ciphertext:</label>
+		<textarea id="ciphertext"></textarea>
+		<br/>
+		<button onclick="encrypt()">Encrypt</button>
+		<button onclick="decrypt()">Decrypt</button>
+		<button onclick="decrypt_threaded()">Decrypt (threaded)</button>
+
+		<script type="text/javascript">
+			var encrypt = function()
+			{
+				var _bigint = new BigInt();
+
+				var n = _bigint.parse($('n').value);
+				var e = _bigint.parse($('e').value);
+
+				var key = new RSAKey({
+					n: n,
+					e: e
+				});
+
+				var plaintext = convert.utf8.encode($('plaintext').value);
+
+				var ciphertext = new RSA().encrypt(plaintext, key);
+
+				ciphertext = convert.base64.encode(ciphertext);
+
+				$('ciphertext').value = ciphertext;
+			}
+			var decrypt = function()
+			{
+				var _bigint = new BigInt();
+
+				var n = _bigint.parse($('n').value);
+				var d = _bigint.parse($('d').value);
+
+				var key = new RSAKey({
+					n: n,
+					d: d
+				});
+
+				var ciphertext	= $('ciphertext').value;
+				ciphertext		= convert.base64.decode(ciphertext);
+
+				var plaintext	= new RSA().decrypt(ciphertext, key);
+
+				plaintext = convert.utf8.decode(plaintext);
+
+				$('plaintext').value = plaintext;
+			}
+			var decrypt_threaded = function()
+			{
+				var _bigint = new BigInt();
+
+				var worker = new Worker('/library/crypto_math.js');
+
+				worker.addEventListener('message', function(e) {
+					var data = e.data;
+		
+					switch (data.cmd) {
+						case 'put_rsa_decrypt':
+							decryption_complete(data.response.plaintext)
+							worker.terminate();
+							break;
+						case 'put_console_log':
+							console.log(data.response.msg);
+							break;
+					}
+				}, false);
+
+				var start_time		= new Date().getTime();
+				$('result').set('html', '<br/>Decrypting...');
+
+				worker.postMessage({
+					cmd: 'get_rsa_decrypt',
+					request: {
+						ciphertext: convert.base64.decode($('ciphertext').value),
+						n: _bigint.parse($('n').value),
+						d: _bigint.parse($('d').value)
+					}
+				});
+
+				var decryption_complete = function(decrypted)
+				{
+					decrypted = new PKCS1_v1_5().decode(decrypted);
+
+					var end_time = new Date().getTime() - start_time;
+					$('result').set('html', '<br/><strong>DONE ('+end_time+'ms)</strong>');
+
+					$('plaintext').value = convert.utf8.decode(decrypted);
+				}
+			}
+			var generate_rsa_key_threaded = function()
+			{
+				var bitlength 	= $('bitlength')[$('bitlength').options.selectedIndex].value;
+				var nlen		= bitlength * 2;
+				var e 			= crypto_math.get_random_public_exponent();
+				var p, q, n, phi_n, u, d;
+
+				var generate_prime_threaded = function(e, nlen, callback, p)
+				{
+					var worker = new Worker('/library/crypto_math.js');
+
+					worker.addEventListener('message', function(e) {
+						var data = e.data;
+			
+						switch (data.cmd) {
+							case 'get_csprng_random_values':
+								worker.postMessage({
+									cmd: 'put_csprng_random_values',
+									response: {
+										random_values: crypto_math.get_csprng_random_values(data.request.bits)
+									}
+								});
+								break;
+							case 'put_error':
+								generation_error(data.error.msg);
+								worker.terminate();
+								break;
+							case 'put_console_log':
+								console.log(data.response.msg);
+								break;
+							case 'put_probable_prime':
+								callback(data.response.prime);
+								worker.terminate();
+								break;
+						}
+					}, false);
+
+					worker.postMessage({
+						cmd: 'get_probable_prime',
+						request: {
+							e: e,
+							nlen: nlen,
+							p: p
+						}
+					});
+				}
+
+				var generate_p_complete = function(prime)
+				{
+					p = prime;
+
+					$('result').set('html', '<br/>Generating q...');
+
+					generate_prime_threaded(e, nlen, generate_q_complete, p);
+				};
+
+				var generate_q_complete = function(prime)
+				{
+					q		= prime;
+
+					var inverse_data = crypto_math.compute_rsa_key_inverse_data(e, p, q);
+
+					n		= inverse_data.n;
+					phi_n	= inverse_data.phi_n;
+					d		= inverse_data.d;
+					u		= inverse_data.u;
+
+					// The order of p and q may have been swapped, such that p < q
+					p		= inverse_data.p;
+					q		= inverse_data.q;
+
+					var key	= new RSAKey({e: e, n: n, d: d, p: p, q: q, u: u});
+
+					// ALL DONE! LOL!
+
+					var end_time = new Date().getTime() - start_time;
+					
+					$('result').set('html', '<br/><strong>DONE ('+end_time+'ms)</strong>');
+					$('e').value = new BigInt().bigInt2str(e, 10);
+					$('p').value = new BigInt().bigInt2str(p, 10);
+					$('q').value = new BigInt().bigInt2str(q, 10);
+					$('n').value = new BigInt().bigInt2str(n, 10);
+					$('phi_n').value = new BigInt().bigInt2str(phi_n, 10);
+					$('d').value = new BigInt().bigInt2str(d, 10);
+					$('u').value = new BigInt().bigInt2str(u, 10);
+
+				};
+
+				var generation_error = function(err)
+				{
+					err || (err = '<strong>ERROR:</strong> RSA key generation not available for this bitlength. Choose 1024 or 1536.<br/><br/>');
+					$('result').set('html', err);
+					return false;
+				}
+
+				// initialize values
+				$('result').set('html', '<br/>Generating p...');
+				$('e').value = '';
+				$('p').value = '';
+				$('q').value = '';
+				$('n').value = '';
+				$('phi_n').value = '';
+				$('u').value = '';
+				$('d').value = '';
+
+				var start_time		= new Date().getTime();
+
+				// Actually start the generation process
+				generate_prime_threaded(e, nlen, generate_p_complete, false);
+			}
+		</script>
+		<hr/>Copyright &copy; 2013 <a href="http://rubbingalcoholic.com">Jeff Lyon</a>
+	</body>
+</html>

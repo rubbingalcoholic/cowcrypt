@@ -140,6 +140,15 @@ var Hasher = new Class(
 	},
 
 	/**
+	 *	Returns the length in bits of the output block for this instance
+	 *	@return {number} The output block size in bits.
+	 */
+	get_outlen: function()
+	{
+		return this.outlen;
+	},
+
+	/**
 	 *	Reverses the endian-ness of the bytes in a word
 	 *
 	 *	@param {number} word		32-bit input word
