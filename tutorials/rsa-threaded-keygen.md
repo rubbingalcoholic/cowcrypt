@@ -433,6 +433,6 @@ The following properties are passed in the request object:
 [9]: #generating-the-large-primes-p-and-q
 [10]: #compute-the-private-key-from-p-and-q
 [11]: #threaded-rsa-decryption
-[12]: #crypto-math-js-worker-messaging-reference
-[13]: #messages-sent-to-the-crypto-math-js-worker
-[14]: #messages-sent-from-the-crypto-math-js-worker
+[12]: #crypto-mathjs-worker-messaging-reference
+[13]: #messages-sent-to-the-crypto-mathjs-worker
+[14]: #messages-sent-from-the-crypto-mathjs-worker
