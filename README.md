@@ -39,7 +39,7 @@ Quick-Start Table of Contents
 	- [OpenSSL Interoperability Mode][20]
 * [RSA Encryption][23]
     - [A note on BigInt values and _crypto_math.js_][30]
-    - [Key Generation][31]
+    - [Threaded Key Generation][31]
     - [Handling RSA Keys][32]
     - [RSA Encryption][33]
     - [RSA Decryption][34]
@@ -330,7 +330,7 @@ You can parse a BigInt value from a string of digits as follows:
     var big_int = new BigInt().parse("812345834502348952793");
 ```
 
-#### Key Generation
+#### Threaded Key Generation
 
 CowCrypt can generate 2048- or 3072-bit RSA keys. The process is CPU-intensive
 and can take from several seconds to over a minute, depending on the hardware
@@ -465,8 +465,8 @@ if something doesn't work or isn't clear. You can find me on Twitter
 [27]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
 [28]: http://tools.ietf.org/rfc/rfc4880.txt
 [29]: http://rubbingalcoholic.github.io/cowcrypt/demos/rsa.html
-[30]: #a-note-on-bigInt-values-and-crypto-math-js
-[31]: #key-generation
+[30]: #a-note-on-bigint-values-and-crypto_mathjs
+[31]: #threaded-key-generation
 [32]: #handling-rsa-keys
 [33]: #rsa-encryption
 [34]: #rsa-decryption
