@@ -11,14 +11,10 @@
 	</head>
 	<body>
 		<h1>CowCrypt RSA *cryption Demo</h1>
-		Bits per prime:
+		Security length:
 		<select id="bitlength">
-			<option value="64">64</option>
-			<option value="128" selected>128</option>
-			<option value="256">256</option>
-			<option value="512">512</option>
-			<option value="1024">1024</option>
-			<option value="1536">1536</option>
+			<option value="1024">2048</option>
+			<option value="1536">3072</option>
 		</select>
 		<br/>
 		<div id="result"></div>
@@ -88,7 +84,7 @@
 			{
 				var _bigint = new BigInt();
 
-				var worker = new Worker('/library/crypto_math.js');
+				var worker = new Worker('../library/crypto_math.js');
 
 				worker.addEventListener('message', function(e) {
 					var data = e.data;
