@@ -131,7 +131,7 @@
 
 				var generate_prime_threaded = function(e, nlen, callback, p)
 				{
-					var worker = new Worker('/library/crypto_math.js');
+					var worker = new Worker('../library/crypto_math.js');
 
 					worker.addEventListener('message', function(e) {
 						var data = e.data;
