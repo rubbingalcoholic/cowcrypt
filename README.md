@@ -465,9 +465,9 @@ if something doesn't work or isn't clear. You can find me on Twitter
 [27]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
 [28]: http://tools.ietf.org/rfc/rfc4880.txt
 [29]: http://rubbingalcoholic.github.io/cowcrypt/demos/rsa.html
-[30]: #a-note-on-bigInt-values-and-crypto-math-js-
+[30]: #a-note-on-bigInt-values-and-crypto-math-js
 [31]: #key-generation
 [32]: #handling-rsa-keys
 [33]: #rsa-encryption
 [34]: #rsa-decryption
-[35]: #eme-pkcs1-v1-5-encoding-and-decoding
+[35]: #eme-pkcs1-v15-encoding-and-decoding
