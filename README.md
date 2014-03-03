@@ -9,7 +9,7 @@ JavaScript framework][1]. My goal is to provide much of the same robust
 functionality as the [crypto-js][2] library, but with the elegance and familiar
 syntax of MooTools. The code is licensed under [the MIT License][3].
 
-This is an early stage project and the algorithms are not fully optimized for
+This is an experimental project and the algorithms are not fully optimized for
 speed. However, many of them perform neck-in-neck with other popular crypto
 libraries, and some of them are much faster (some of them are slower :p).
 
